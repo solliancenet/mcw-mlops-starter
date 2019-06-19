@@ -35,7 +35,7 @@ image_id = eval_info["image_id"]
 
 if deploy_model == False:
     print('Model metric did not meet the metric threshold criteria and will not be deployed!')
-    print('Existing')
+    print('Exiting')
     sys.exit(0)
 
 print('Moving forward with deployment...')
