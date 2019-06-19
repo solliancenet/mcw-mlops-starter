@@ -103,7 +103,7 @@ if deploy_model == False:
         json.dump(eval_info, f)
         print('eval_info.json saved')
     print('Model did not meet the accuracy criteria and will not be deployed!')
-    print('Existing')
+    print('Exiting')
     sys.exit(0)
 
 # Continue to package Model and create image
