@@ -6,7 +6,7 @@ from azureml.core.webservice import Webservice, AksWebservice
 from azureml.core import Image
 from azureml.core.authentication import AzureCliAuthentication
 import json
-import os
+import os, sys
 
 print("In deploy.py")
 print("Azure Python SDK version: ", azureml.core.VERSION)
