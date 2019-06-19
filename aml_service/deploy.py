@@ -91,3 +91,10 @@ aci_webservice_filepath = os.path.join('./outputs', 'aci_webservice.json')
 with open(aci_webservice_filepath, "w") as f:
     json.dump(aci_webservice, f)
 print("Done saving aci_webservice.json!")
+
+# Single test data
+test_data = [[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8, 2, 5, 6, 4, 3, 1, 34]]
+# Call the webservice to make predictions on the test data
+prediction = aci_service.run(json.dumps(test_data))
+print('Test data prediction: ', prediction)
+
