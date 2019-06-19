@@ -63,38 +63,41 @@ print(image)
 
 aks_name = args.aks_name 
 aks_service_name = args.service_name
+
 try:
     service = Webservice(name=aks_service_name, workspace=ws)
-    print("Updating AKS service {} with image: {}".format(aks_service_name, image.image_location))
-    service.update(image = image) 
+    print("Deleting AKS service {}".format(aks_service_name))
+    service.delete()
 except:
-    compute_list = ws.compute_targets
-    aks_target = None
-    if aks_name in compute_list:
-        aks_target = compute_list[aks_name]
+    print("No existing webservice found: ", aks_service_name)
+
+compute_list = ws.compute_targets
+aks_target = None
+if aks_name in compute_list:
+    aks_target = compute_list[aks_name]
     
-    if aks_target == None:
-        print("No AKS found. Creating new Aks: {} and AKS Webservice: {}".format(aks_name, aks_service_name))
-        prov_config = AksCompute.provisioning_configuration(location="eastus")
-        # Create the cluster
-        aks_target = ComputeTarget.create(workspace=ws, name=aks_name, provisioning_configuration=prov_config)
-        aks_target.wait_for_completion(show_output=True)
-        print(aks_target.provisioning_state)
-        print(aks_target.provisioning_errors)
+if aks_target == None:
+    print("No AKS found. Creating new Aks: {} and AKS Webservice: {}".format(aks_name, aks_service_name))
+    prov_config = AksCompute.provisioning_configuration(location="eastus")
+    # Create the cluster
+    aks_target = ComputeTarget.create(workspace=ws, name=aks_name, provisioning_configuration=prov_config)
+    aks_target.wait_for_completion(show_output=True)
+    print(aks_target.provisioning_state)
+    print(aks_target.provisioning_errors)
     
-    print("Creating new webservice")
-    # Create the web service configuration (using defaults)
-    aks_config = AksWebservice.deploy_configuration(description = "AKS Custom Description", 
-                                                    tags = {'name': aks_name, 'image_id': image.id})
-    service = Webservice.deploy_from_image(
-        workspace=ws,
-        name=aks_service_name,
-        image=image,
-        deployment_config=aks_config,
-        deployment_target=aks_target
-    )
-    service.wait_for_deployment(show_output=True)
-    print(service.state)
+print("Creating new webservice")
+# Create the web service configuration (using defaults)
+aks_config = AksWebservice.deploy_configuration(description = args.description, 
+                                                tags = {'name': aks_name, 'image_id': image.id})
+service = Webservice.deploy_from_image(
+    workspace=ws,
+    name=aks_service_name,
+    image=image,
+    deployment_config=aks_config,
+    deployment_target=aks_target
+)
+service.wait_for_deployment(show_output=True)
+print(service.state)
 
 api_key, _ = service.get_keys()
 print("Deployed AKS Webservice: {} \nWebservice Uri: {} \nWebservice API Key: {}".
