@@ -83,7 +83,7 @@ if current_model != None:
         deploy_model = True
         print('Current model performs better and will be deployed!')
     else:
-        print('Current model does NOT performs better and thus will NOT be deployed!')
+        print('Current model does NOT perform better and thus will NOT be deployed!')
 
 eval_info = {}
 eval_info["model_name"] = latest_model_name
@@ -120,7 +120,7 @@ with open('score_fixed.py', "w") as f:
 # create a Conda dependencies environment file
 print("Creating conda dependencies file locally...")
 conda_packages = ['numpy']
-pip_packages = ['tensorflow==1.12.2', 'keras==2.2.4', 'azureml-sdk']
+pip_packages = ['tensorflow==1.12.2', 'keras==2.2.4', 'azureml-sdk', 'azureml-monitoring']
 mycondaenv = CondaDependencies.create(conda_packages=conda_packages, pip_packages=pip_packages)
 
 conda_file = 'scoring_dependencies.yml'
