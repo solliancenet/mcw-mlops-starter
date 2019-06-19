@@ -1,7 +1,8 @@
 import argparse
 import azureml.core
 from azureml.core import Workspace, Experiment, Run
-from azureml.core.webservice import AciWebservice, Webservice
+from azureml.core.compute import AksCompute, ComputeTarget
+from azureml.core.webservice import Webservice, AksWebservice
 from azureml.core import Image
 from azureml.core.authentication import AzureCliAuthentication
 import json
@@ -41,12 +42,12 @@ print('Moving forward with deployment...')
 
 parser = argparse.ArgumentParser("deploy")
 parser.add_argument("--service_name", type=str, help="service name", dest="service_name", required=True)
-parser.add_argument("--aci_name", type=str, help="aci name", dest="aci_name", required=True)
+parser.add_argument("--aks_name", type=str, help="aci name", dest="aks_name", required=True)
 parser.add_argument("--description", type=str, help="description", dest="description", required=True)
 args = parser.parse_args()
 
 print("Argument 1: %s" % args.service_name)
-print("Argument 2: %s" % args.aci_name)
+print("Argument 2: %s" % args.aks_name)
 print("Argument 3: %s" % args.description)
 
 print('creating AzureCliAuthentication...')
@@ -60,41 +61,61 @@ print('done getting workspace!')
 image = Image(ws, id = image_id)
 print(image)
 
+aks_name = args.aks_name 
+aks_service_name = args.service_name
 try:
-    existing_websrv = Webservice(ws, args.service_name)
-    existing_websrv.delete()
-    print("Existing webservice deleted: ", args.service_name)
+    service = Webservice(name=aks_service_name, workspace=ws)
+    print("Updating AKS service {} with image: {}".format(aks_service_name, image.image_location))
+    service.update(image = image) 
 except:
-    print("No existing webservice found: ", args.service_name)
+    compute_list = ws.compute_targets
+    aks_target = None
+    if aks_name in compute_list:
+        aks_target = compute_list[aks_name]
+    
+    if aks_target == None:
+        print("No AKS found. Creating new Aks: {} and AKS Webservice: {}".format(aks_name, aks_service_name))
+        prov_config = AksCompute.provisioning_configuration(location="eastus")
+        # Create the cluster
+        aks_target = ComputeTarget.create(workspace=ws, name=aks_name, provisioning_configuration=prov_config)
+        aks_target.wait_for_completion(show_output=True)
+        print(aks_target.provisioning_state)
+        print(aks_target.provisioning_errors)
+    
+    print("Creating new webservice")
+    # Create the web service configuration (using defaults)
+    aks_config = AksWebservice.deploy_configuration(description = "AKS Custom Description", 
+                                                    tags = {'name': aks_name, 'image_id': image.id})
+    service = Webservice.deploy_from_image(
+        workspace=ws,
+        name=aks_service_name,
+        image=image,
+        deployment_config=aks_config,
+        deployment_target=aks_target
+    )
+    service.wait_for_deployment(show_output=True)
+    print(service.state)
 
-aci_config = AciWebservice.deploy_configuration(
-    cpu_cores = 1, 
-    memory_gb = 1, 
-    tags = {'name': args.aci_name, 'image_id': image_id}, 
-    description = args.description)
+api_key, _ = service.get_keys()
+print("Deployed AKS Webservice: {} \nWebservice Uri: {} \nWebservice API Key: {}".
+      format(service.name, service.scoring_uri, api_key))
 
-aci_service = Webservice.deploy_from_image(deployment_config=aci_config, 
-                                           image=image, 
-                                           name=args.service_name, 
-                                           workspace=ws)
+aks_webservice = {}
+aks_webservice["aks_service_name"] = service.name
+aks_webservice["aks_service_url"] = service.scoring_uri
+aks_webservice["aks_service_api_key"] = api_key
+print("AKS Webservice Info")
+print(aks_webservice)
 
-aci_service.wait_for_deployment(show_output=True)
-
-aci_webservice = {}
-aci_webservice["aci_name"] = aci_service.name
-aci_webservice["aci_url"] = aci_service.scoring_uri
-print("ACI Webservice Scoring URI")
-print(aci_webservice)
-
-print("Saving aci_webservice.json...")
-aci_webservice_filepath = os.path.join('./outputs', 'aci_webservice.json')
-with open(aci_webservice_filepath, "w") as f:
-    json.dump(aci_webservice, f)
-print("Done saving aci_webservice.json!")
+print("Saving aks_webservice.json...")
+aks_webservice_filepath = os.path.join('./outputs', 'aks_webservice.json')
+with open(aks_webservice_filepath, "w") as f:
+    json.dump(aks_webservice, f)
+print("Done saving aks_webservice.json!")
 
 # Single test data
 test_data = [[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8, 2, 5, 6, 4, 3, 1, 34]]
 # Call the webservice to make predictions on the test data
-prediction = aci_service.run(json.dumps(test_data))
+prediction = service.run(json.dumps(test_data))
 print('Test data prediction: ', prediction)
 
