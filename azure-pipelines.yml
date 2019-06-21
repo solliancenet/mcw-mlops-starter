@@ -8,7 +8,6 @@ variables:
   resourcegroup: 'Quick-Starts-XXXXX'
   workspace: 'quick-starts-ws-XXXXX'
   experiment: 'quick-starts-mlops'
-  location: 'eastus'
   aml_compute_target: 'gpucluster'
   model_name: 'compliance-classifier'
   image_name: 'compliance-classifier-image'
