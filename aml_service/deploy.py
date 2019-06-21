@@ -42,13 +42,15 @@ print('Moving forward with deployment...')
 
 parser = argparse.ArgumentParser("deploy")
 parser.add_argument("--service_name", type=str, help="service name", dest="service_name", required=True)
-parser.add_argument("--aks_name", type=str, help="aci name", dest="aks_name", required=True)
+parser.add_argument("--aks_name", type=str, help="aks name", dest="aks_name", required=True)
+parser.add_argument("--aks_region", type=str, help="aks region", dest="aks_region", required=True)
 parser.add_argument("--description", type=str, help="description", dest="description", required=True)
 args = parser.parse_args()
 
 print("Argument 1: %s" % args.service_name)
 print("Argument 2: %s" % args.aks_name)
-print("Argument 3: %s" % args.description)
+print("Argument 3: %s" % args.aks_region)
+print("Argument 4: %s" % args.description)
 
 print('creating AzureCliAuthentication...')
 cli_auth = AzureCliAuthentication()
@@ -62,6 +64,7 @@ image = Image(ws, id = image_id)
 print(image)
 
 aks_name = args.aks_name 
+aks_region = args.aks_region
 aks_service_name = args.service_name
 
 try:
@@ -78,7 +81,7 @@ if aks_name in compute_list:
     
 if aks_target == None:
     print("No AKS found. Creating new Aks: {} and AKS Webservice: {}".format(aks_name, aks_service_name))
-    prov_config = AksCompute.provisioning_configuration(location="eastus")
+    prov_config = AksCompute.provisioning_configuration(location=aks_region)
     # Create the cluster
     aks_target = ComputeTarget.create(workspace=ws, name=aks_name, provisioning_configuration=prov_config)
     aks_target.wait_for_completion(show_output=True)
