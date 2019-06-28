@@ -38,7 +38,7 @@ steps:
   inputs:
     azureSubscription: 'quick-starts-sc'
     scriptLocation: inlineScript
-    inlineScript: 'az ml folder attach -e $(experiment) -w $(workspace) -g $(resourcegroup)'
+    inlineScript: 'az ml folder attach -e $(experiment) -w $(workspace) -g $(resourcegroup) --path $(Build.SourcesDirectory)'
 
 - task: AzureCLI@1
   displayName: 'Get or create AML Compute Target'
@@ -46,7 +46,8 @@ steps:
     azureSubscription: 'quick-starts-sc'
     scriptLocation: inlineScript
     inlineScript: 'az ml run submit-script -d ./environment_setup/dependencies.yml 
-    ./aml_service/create_aml_cluster.py --aml_compute_target $(aml_compute_target)'
+    ./aml_service/create_aml_cluster.py --aml_compute_target $(aml_compute_target) 
+    --path $(Build.SourcesDirectory)'
 
 - task: AzureCLI@1
   displayName: 'Master Pipeline'
