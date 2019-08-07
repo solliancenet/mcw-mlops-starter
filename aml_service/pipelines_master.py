@@ -17,14 +17,6 @@ print("Pipeline SDK-specific imports completed")
 # Check core SDK version number
 print("Azure ML SDK version:", azureml.core.VERSION)
 
-print('creating AzureCliAuthentication...')
-cli_auth = AzureCliAuthentication()
-print('done creating AzureCliAuthentication!')
-
-print('get workspace...')
-ws = Workspace.from_config(auth=cli_auth)
-print('done getting workspace!')
-
 parser = argparse.ArgumentParser("pipelines_master")
 parser.add_argument("--aml_compute_target", type=str, help="compute target name", dest="aml_compute_target", required=True)
 parser.add_argument("--model_name", type=str, help="model name", dest="model_name", required=True)
@@ -36,6 +28,14 @@ print("Argument 1: %s" % args.aml_compute_target)
 print("Argument 2: %s" % args.model_name)
 print("Argument 3: %s" % args.image_name)
 print("Argument 4: %s" % args.path)
+
+print('creating AzureCliAuthentication...')
+cli_auth = AzureCliAuthentication()
+print('done creating AzureCliAuthentication!')
+
+print('get workspace...')
+ws = Workspace.from_config(path=args.path, auth=cli_auth)
+print('done getting workspace!')
 
 print("looking for existing compute target.")
 aml_compute = AmlCompute(ws, args.aml_compute_target)
