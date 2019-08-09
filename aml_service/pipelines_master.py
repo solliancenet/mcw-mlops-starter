@@ -20,14 +20,16 @@ print("Azure ML SDK version:", azureml.core.VERSION)
 parser = argparse.ArgumentParser("pipelines_master")
 parser.add_argument("--aml_compute_target", type=str, help="compute target name", dest="aml_compute_target", required=True)
 parser.add_argument("--model_name", type=str, help="model name", dest="model_name", required=True)
+parser.add_argument("--build_number", type=str, help="build number", dest="build_number", required=True)
 parser.add_argument("--image_name", type=str, help="image name", dest="image_name", required=True)
 parser.add_argument("--path", type=str, help="path", dest="path", required=True)
 args = parser.parse_args()
 
 print("Argument 1: %s" % args.aml_compute_target)
 print("Argument 2: %s" % args.model_name)
-print("Argument 3: %s" % args.image_name)
-print("Argument 4: %s" % args.path)
+print("Argument 3: %s" % args.build_number)
+print("Argument 4: %s" % args.image_name)
+print("Argument 5: %s" % args.path)
 
 print('creating AzureCliAuthentication...')
 cli_auth = AzureCliAuthentication()
@@ -77,7 +79,8 @@ print("train_output PipelineData object created")
 trainStep = PythonScriptStep(
     name="train",
     script_name="train.py", 
-    arguments=["--model_name", args.model_name],
+    arguments=["--model_name", args.model_name,
+              "--build_number", args.build_number],
     compute_target=aml_compute,
     runconfig=run_amlcompute,
     source_directory=scripts_folder,
@@ -139,9 +142,3 @@ filepath = os.path.join(output_dir, 'eval_info.json')
 with open(filepath, "w") as f:
     json.dump(eval_info, f)
     print('eval_info.json saved!')
-
-
-
-
-
-

@@ -18,10 +18,12 @@ print("As a data scientist, this is where I write my training code.")
 parser = argparse.ArgumentParser("train")
 
 parser.add_argument("--model_name", type=str, help="model name", dest="model_name", required=True)
+parser.add_argument("--build_number", type=str, help="build number", dest="build_number", required=True)
 
 args = parser.parse_args()
 
 print("Argument 1: %s" % args.model_name)
+print("Argument 2: %s" % args.build_number)
 
 def get_data():
     data_url = ('https://quickstartsws9073123377.blob.core.windows.net/'
@@ -170,7 +172,7 @@ model_description = 'Deep learning model to classify the descriptions of car com
 model = Model.register(
     model_path='model.h5',  # this points to a local file
     model_name=args.model_name,  # this is the name the model is registered as
-    tags={"type": "classification", "run_id": run.id},
+    tags={"type": "classification", "run_id": run.id, "build_number": args.build_number},
     description=model_description,
     workspace=run.experiment.workspace
 )
