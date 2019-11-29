@@ -98,14 +98,8 @@ print("Download complete.")
 #
 #-------------------------------------------------------------------
 
-print("Loading car components data...")
-
-try:
-    cardata_ds = Dataset.get_by_name(workspace=ws, name=cardata_ds_name)
-    print('Connected car components dataset already registered.')
-except:
-    print('Load connected car components dataset...')
-    cardata_ds = Dataset.Tabular.from_delimited_files(path=cardata_url)
+print('Load connected car components dataset...')
+cardata_ds = Dataset.Tabular.from_delimited_files(path=cardata_url)
 
 # For each run, register a new version of the dataset and tag it with the build number.
 # This provides full traceability using a specific Azure DevOps build number.
