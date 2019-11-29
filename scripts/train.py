@@ -16,6 +16,7 @@ from keras.layers import Embedding, Flatten, Dense
 
 from azureml.core import Run
 from azureml.core.dataset import Dataset
+from azureml.core.model import Model
 
 print("Executing train.py")
 print("As a data scientist, this is where I write my training code.")
@@ -110,7 +111,7 @@ except:
 # This provides full traceability using a specific Azure DevOps build number.
 
 cardata_ds.register(workspace=ws, name=cardata_ds_name, description=cardata_ds_description,
-    exist_ok=True, update_if_exist=False, tags={"build_number": args.build_number})
+    tags={"build_number": args.build_number})
 print('Connected car components dataset successfully registered.')
 
 car_components_df = cardata_ds.to_pandas_dataframe()
