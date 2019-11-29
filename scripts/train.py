@@ -14,12 +14,14 @@ from keras.preprocessing.sequence import pad_sequences
 from keras.models import Sequential
 from keras.layers import Embedding, Flatten, Dense
 
+import azureml.core
 from azureml.core import Run
 from azureml.core.dataset import Dataset
 from azureml.core.model import Model
 
 print("Executing train.py")
 print("As a data scientist, this is where I write my training code.")
+print("Azure Machine Learning SDK version: {}".format(azureml.core.VERSION))
 
 #-------------------------------------------------------------------
 #
@@ -240,15 +242,15 @@ run = Run.get_context()
 run.log(model.metrics_names[0], evaluation_metrics[0], 'Model test data loss')
 run.log(model.metrics_names[1], evaluation_metrics[1], 'Model test data accuracy')
 
-os.chdir("./outputs")
-
 #-------------------------------------------------------------------
 #
 # Register the model the model
 #
 #-------------------------------------------------------------------
 
-# The model references the data set used to provide its training data
+os.chdir("./outputs/model")
+
+# The registered model references the data set used to provide its training data
 
 model_description = 'Deep learning model to classify the descriptions of car components as compliant or non-compliant.'
 model = Model.register(
@@ -257,10 +259,7 @@ model = Model.register(
     tags={"type": "classification", "run_id": run.id, "build_number": args.build_number},
     description=model_description,
     workspace=run.experiment.workspace,
-    datasets=[('training data', cardata_ds)]
-)
-
-os.chdir("..")
+    datasets=[('training data', cardata_ds)])
 
 print("Model registered: {} \nModel Description: {} \nModel Version: {}".format(model.name, 
                                                                                 model.description, model.version))
