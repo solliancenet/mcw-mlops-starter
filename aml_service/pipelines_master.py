@@ -65,8 +65,8 @@ run_amlcompute.auto_prepare_environment = True
 run_amlcompute.environment.python.conda_dependencies = CondaDependencies.create(pip_packages=[
     'numpy',
     'pandas',
-    'tensorflow==1.12.2',
-    'keras==2.2.4',
+    'tensorflow==2.0.0',
+    'keras==2.3.1',
     'azureml-sdk'
 ])
 
