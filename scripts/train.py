@@ -1,5 +1,6 @@
 import argparse
 import json
+import urllib
 
 import os
 import numpy as np
@@ -17,6 +18,7 @@ from keras.layers import Embedding, Flatten, Dense
 import azureml.core
 from azureml.core import Run
 from azureml.core.dataset import Dataset
+from azureml.core.datastore import Datastore
 from azureml.core.model import Model
 
 print("Executing train.py")
@@ -55,7 +57,7 @@ glove_url = ('https://quickstartsws9073123377.blob.core.windows.net/'
 glove_ds_name = 'glove_6B_100d'
 glove_ds_description ='GloVe embeddings 6B 100d'
 
-# this is the URL to the CSV file containing the care component descriptions
+# this is the URL to the CSV file containing the connected car component descriptions
 cardata_url = ('https://quickstartsws9073123377.blob.core.windows.net/'
             'azureml-blobstore-0d1c4218-a5f9-418b-bf55-902b65277b85/'
             'quickstarts/connected-car-data/connected-car_components.csv')
@@ -70,6 +72,7 @@ max_words = 10000
 
 run = Run.get_context()
 ws = run.experiment.workspace
+ds = Datastore.get_default(ws)
 
 #-------------------------------------------------------------------
 #
@@ -100,21 +103,31 @@ print("Download complete.")
 #
 #-------------------------------------------------------------------
 
-print('Load connected car components dataset...')
-cardata_ds = Dataset.Tabular.from_delimited_files(path=cardata_url)
+print('Processing connected car components dataset...')
+
+# Download the current version of the dataset and save a snapshot in the datastore
+# using the build number as the subfolder name
+
+local_cardata_path = '{}/connected-car-components.csv'.format(datasets_folder)
+ds_cardata_path = 'datasets/{}'.format(args.build_number)
+
+urllib.request.urlretrieve(cardata_url, local_cardata_path)
+ds.upload_files([local_cardata_path], target_path=ds_cardata_path, overwrite=True)
+
+cardata_ds = Dataset.Tabular.from_delimited_files(path=[(ds, 'datasets/{}/connected-car-components.csv'.format(args.build_number))])
 
 # For each run, register a new version of the dataset and tag it with the build number.
 # This provides full traceability using a specific Azure DevOps build number.
 
 cardata_ds.register(workspace=ws, name=cardata_ds_name, description=cardata_ds_description,
-    tags={"build_number": args.build_number})
+    tags={"build_number": args.build_number}, create_new_version=True)
 print('Connected car components dataset successfully registered.')
 
 car_components_df = cardata_ds.to_pandas_dataframe()
 components = car_components_df["text"].tolist()
 labels = car_components_df["label"].tolist()
 
-print("Loading car components data completed.")
+print("Processing car components data completed.")
 
 #-------------------------------------------------------------------
 #
@@ -259,7 +272,7 @@ model = Model.register(
     tags={"type": "classification", "run_id": run.id, "build_number": args.build_number},
     description=model_description,
     workspace=run.experiment.workspace,
-    datasets=[('training data', cardata_ds)])
+    datasets=[('training data', cardata_ds), ('embedding data', glove_ds)])
 
 print("Model registered: {} \nModel Description: {} \nModel Version: {}".format(model.name, 
                                                                                 model.description, model.version))
