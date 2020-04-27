@@ -120,7 +120,7 @@ experiment_name = run.experiment.name
 pipeline_run = Experiment(ws, experiment_name).submit(pipeline)
 print("Pipeline is submitted for execution")
 
-pipeline_run.wait_for_completion(show_output=True)
+pipeline_run.wait_for_completion(show_output=True, timeout_seconds=43200)
 
 print("Downloading evaluation results...")
 # access the evaluate_output
