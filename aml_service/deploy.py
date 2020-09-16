@@ -1,12 +1,15 @@
 import argparse
 import azureml.core
 from azureml.core import Workspace, Experiment, Run
+from azureml.core.model import Model
+from azureml.core import Environment
+from azureml.core.model import InferenceConfig
 from azureml.core.compute import AksCompute, ComputeTarget
 from azureml.core.webservice import Webservice, AksWebservice
-from azureml.core import Image
 from azureml.core.authentication import AzureCliAuthentication
 import json
-import os, sys
+import os
+import sys
 
 print("In deploy.py")
 print("Azure Python SDK version: ", azureml.core.VERSION)
@@ -24,14 +27,18 @@ except:
     print("Exiting...")
     sys.exit(0)
 
+deploy_model = eval_info["deploy_model"]
+if deploy_model == False:
+    print('Model metric did not meet the metric threshold criteria and will not be deployed!')
+    print('Exiting')
+    sys.exit(0)
+
 model_name = eval_info["model_name"]
 model_version = eval_info["model_version"]
 model_path = eval_info["model_path"]
 model_acc = eval_info["model_acc"]
 deployed_model_acc = eval_info["deployed_model_acc"]
 deploy_model = eval_info["deploy_model"]
-image_name = eval_info["image_name"]
-image_id = eval_info["image_id"]
 
 if deploy_model == False:
     print('Model metric did not meet the metric threshold criteria and will not be deployed!')
@@ -60,9 +67,6 @@ print('get workspace...')
 ws = Workspace.from_config(auth=cli_auth)
 print('done getting workspace!')
 
-image = Image(ws, id = image_id)
-print(image)
-
 aks_name = args.aks_name 
 aks_region = args.aks_region
 aks_service_name = args.service_name
@@ -89,16 +93,27 @@ if aks_target == None:
     print(aks_target.provisioning_errors)
     
 print("Creating new webservice")
+myEnv = Environment.from_conda_specification(aks_service_name + '-env', os.path.join('./outputs', 'scoring_dependencies.yml'))
+myEnv.register(workspace=ws)
+inference_config = InferenceConfig(entry_script='score_fixed.py', source_directory='./outputs', environment=myEnv)
 # Create the web service configuration (using defaults)
+print('get model...')
+model = Model(ws, name=model_name, version=model_version)
+train_run_id = model.tags.get("run_id")
+
 aks_config = AksWebservice.deploy_configuration(description = args.description, 
-                                                tags = {'name': aks_name, 'image_id': image.id})
-service = Webservice.deploy_from_image(
-    workspace=ws,
-    name=aks_service_name,
-    image=image,
-    deployment_config=aks_config,
-    deployment_target=aks_target
-)
+                                                tags = {'name': aks_name, 
+                                                        'model_name': model_name, 
+                                                        'model_version': model_version, 
+                                                        'run_id': train_run_id})
+service = Model.deploy(workspace=ws,
+                       name=aks_service_name,
+                       models=[model],
+                       inference_config=inference_config,
+                       deployment_config=aks_config, 
+                       deployment_target=aks_target, 
+                       overwrite=True)
+
 service.wait_for_deployment(show_output=True)
 print(service.state)
 

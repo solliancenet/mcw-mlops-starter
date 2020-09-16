@@ -139,7 +139,19 @@ print("Saving evaluation results for release pipeline...")
 output_dir = os.path.join(args.path, 'outputs')
 os.makedirs(output_dir, exist_ok=True)
 filepath = os.path.join(output_dir, 'eval_info.json')
-
 with open(filepath, "w") as f:
     json.dump(eval_info, f)
     print('eval_info.json saved!')
+
+
+from shutil import copyfile
+score_file = 'score_fixed.py'
+score_filepath = os.path.join('./', data.path_on_datastore, score_file)
+conda_file = 'scoring_dependencies.yml'
+conda_filepath = os.path.join('./', data.path_on_datastore, conda_file)
+
+print("Saving score file...")
+copyfile(score_filepath, os.path.join(output_dir, score_file))
+print("Saving conda file...")
+copyfile(conda_filepath, os.path.join(output_dir, conda_file))
+print("Files saved!")
