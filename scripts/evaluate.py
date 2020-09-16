@@ -92,8 +92,6 @@ eval_info["model_path"] = latest_model_path
 eval_info["model_acc"] = latest_model_accuracy
 eval_info["deployed_model_acc"] = current_model_accuracy
 eval_info["deploy_model"] = deploy_model
-eval_info["image_name"] = args.image_name
-eval_info["image_id"] = ""
 
 os.makedirs(args.output, exist_ok=True)
 eval_filepath = os.path.join(args.output, 'eval_info.json')
@@ -113,32 +111,21 @@ print('Proceeding to package model and create the image...')
 print('Updating scoring file with the correct model name')
 with open('score.py') as f:
     data = f.read()
-with open('score_fixed.py', "w") as f:
+score_filepath = os.path.join(args.output, 'score_fixed.py')
+with open(score_filepath, "w") as f:
     f.write(data.replace('MODEL-NAME', args.model_name)) #replace the placeholder MODEL-NAME
     print('score_fixed.py saved')
 
 # create a Conda dependencies environment file
 print("Creating conda dependencies file locally...")
 conda_packages = ['numpy']
-pip_packages = ['tensorflow==2.0.0', 'keras==2.3.1', 'azureml-sdk', 'azureml-monitoring']
+pip_packages = ['tensorflow==2.0.0', 'keras==2.3.1', 'azureml-defaults', 'azureml-sdk', 'azureml-monitoring']
 mycondaenv = CondaDependencies.create(conda_packages=conda_packages, pip_packages=pip_packages)
 
 conda_file = 'scoring_dependencies.yml'
-with open(conda_file, 'w') as f:
+conda_filepath = os.path.join(args.output, conda_file)
+with open(conda_filepath, 'w') as f:
     f.write(mycondaenv.serialize_to_string())
-
-# create container image configuration
-print("Creating container image configuration...")
-image_config = ContainerImage.image_configuration(execution_script = 'score_fixed.py', 
-                                                  runtime = 'python', conda_file = conda_file)
-
-print("Creating image...")
-image = Image.create(name=args.image_name, models=[latest_model], image_config=image_config, workspace=ws)
-
-# wait for image creation to finish
-image.wait_for_creation(show_output=True)
-
-eval_info["image_id"] = image.id
 
 with open(eval_filepath, "w") as f:
     json.dump(eval_info, f)
