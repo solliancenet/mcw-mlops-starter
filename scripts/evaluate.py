@@ -18,13 +18,15 @@ parser = argparse.ArgumentParser("evaluate")
 
 parser.add_argument("--model_name", type=str, help="model name", dest="model_name", required=True)
 parser.add_argument("--image_name", type=str, help="image name", dest="image_name", required=True)
+parser.add_argument("--input", type=str, help="directory for saved model", dest="input", required=True)
 parser.add_argument("--output", type=str, help="eval output directory", dest="output", required=True)
 
 args = parser.parse_args()
 
 print("Argument 1: %s" % args.model_name)
 print("Argument 2: %s" % args.image_name)
-print("Argument 3: %s" % args.output)
+print("Argument 3: %s" % args.input)
+print("Argument 4: %s" % args.output)
 
 run = Run.get_context()
 ws = run.experiment.workspace
