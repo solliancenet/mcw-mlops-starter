@@ -35,11 +35,13 @@ parser = argparse.ArgumentParser("train")
 
 parser.add_argument("--model_name", type=str, help="model name", dest="model_name", required=True)
 parser.add_argument("--build_number", type=str, help="build number", dest="build_number", required=True)
+parser.add_argument("--output", type=str, help="output directory for saved model", dest="output", required=True)
 
 args = parser.parse_args()
 
 print("Argument 1: %s" % args.model_name)
 print("Argument 2: %s" % args.build_number)
+print("Argument 2: %s" % args.output)
 
 #-------------------------------------------------------------------
 #
