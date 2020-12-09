@@ -13,3 +13,7 @@ dependencies:
 - pip:
   - azureml-sdk
   - azure-cli
+
+channels:
+- anaconda
+- conda-forge
